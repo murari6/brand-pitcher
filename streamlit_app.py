@@ -70,4 +70,5 @@ if st.button("✨ Write Winning Email"):
                     # This prints the ACTUAL list of models your key can see
                     st.write("Your valid models are:")
                     st.write([m.name for m in genai.list_models()])
-                except
+                except:
+                    st.write("Could not list models. Check API Key.")
