@@ -4,12 +4,17 @@ import google.generativeai as genai
 # --- 1. CONFIG ---
 st.set_page_config(page_title="Brand Deal Pitcher", page_icon="💸", layout="centered")
 
-# --- 2. STYLE ---
+# --- 2. STYLE (Luxury Gold/Black) ---
 st.markdown("""
     <style>
     .stApp { background-color: #000000; color: #D4AF37; }
-    .stTextInput > div > div > input { background-color: #1a1a1a !important; color: white !important; border: 1px solid #D4AF37 !important; }
-    .stButton > button { background: linear-gradient(45deg, #D4AF37, #F8F8F8); color: black !important; font-weight: bold; border: none; width: 100%; padding: 15px; }
+    .stTextInput > div > div > input { 
+        background-color: #1a1a1a !important; color: white !important; border: 1px solid #D4AF37 !important; 
+    }
+    .stButton > button {
+        background: linear-gradient(45deg, #D4AF37, #F8F8F8);
+        color: black !important; font-weight: bold; border: none; width: 100%; padding: 15px;
+    }
     h1 { text-align: center; text-shadow: 0px 0px 10px rgba(212, 175, 55, 0.5); }
     .stCode { background-color: #1a1a1a !important; border: 1px solid #D4AF37; }
     </style>
@@ -40,31 +45,22 @@ if st.button("✨ Write Winning Email"):
             try:
                 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
                 
-                # --- 🛑 FORCING GEMINI 2.5 FLASH ---
-                # If this crashes, the model name is wrong on Google's end.
-                target_model = 'gemini-2.5-flash' 
-                
-                model = genai.GenerativeModel(target_model)
+                # Try to force the newest model, fallback if needed
+                model = genai.GenerativeModel('gemini-1.5-flash') 
                 
                 prompt = f"""
                 Act as a Talent Agent. Write a sponsorship pitch.
                 To: {brand_name}
                 From: Influencer ({my_niche}, {follower_count} followers, {avg_views} views).
-                Tone: Professional.
+                Tone: Professional, High-Converting.
                 """
                 
-                with st.spinner(f"Connecting to {target_model}..."):
+                # CLEANER LOADING MESSAGE HERE 👇
+                with st.spinner("✨ Drafting your email..."):
                     response = model.generate_content(prompt)
                     st.subheader("📩 Pitch Draft:")
                     st.code(response.text, language="text")
                     st.balloons()
                     
             except Exception as e:
-                st.error(f"❌ Model Error: {e}")
-                st.warning("👇 DEBUG: Here are the models your API Key CAN actually see:")
-                try:
-                    # This prints the valid list so you can copy the RIGHT name
-                    available = [m.name for m in genai.list_models()]
-                    st.write(available)
-                except:
-                    st.write("Could not list models.")
+                st.error(f"Error: {e}")
