@@ -4,7 +4,7 @@ import google.generativeai as genai
 # --- 1. CONFIG ---
 st.set_page_config(page_title="Brand Deal Pitcher", page_icon="💸", layout="centered")
 
-# --- 2. STYLE (Luxury Gold/Black) ---
+# --- 2. LUXURY STYLE ---
 st.markdown("""
     <style>
     .stApp { background-color: #000000; color: #D4AF37; }
@@ -20,7 +20,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. APP LOGIC ---
+# --- 3. AUTO-FIXER FUNCTION (The Magic Part) ---
+def get_any_working_model(api_key):
+    genai.configure(api_key=api_key)
+    
+    # Priority List: Try these exact names first
+    priority_models = [
+        'gemini-1.5-flash', 
+        'gemini-1.5-flash-latest', 
+        'gemini-1.5-flash-001',
+        'gemini-pro',
+        'gemini-1.0-pro'
+    ]
+    
+    for model_name in priority_models:
+        try:
+            # Test if model exists
+            test_model = genai.GenerativeModel(model_name)
+            return test_model
+        except:
+            continue
+            
+    # If all specifically named models fail, ask Google for help
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                return genai.GenerativeModel(m.name)
+    except:
+        return None
+
+# --- 4. APP LOGIC ---
 st.markdown("<h1>💸 Brand Deal Pitch Writer</h1>", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
@@ -43,24 +72,24 @@ if st.button("✨ Write Winning Email"):
             st.error("⚠️ API Key missing in Secrets.")
         else:
             try:
-                genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+                # USE THE AUTO-FIXER
+                model = get_any_working_model(st.secrets["GOOGLE_API_KEY"])
                 
-                # Try to force the newest model, fallback if needed
-                model = genai.GenerativeModel('gemini-1.5-flash') 
-                
-                prompt = f"""
-                Act as a Talent Agent. Write a sponsorship pitch.
-                To: {brand_name}
-                From: Influencer ({my_niche}, {follower_count} followers, {avg_views} views).
-                Tone: Professional, High-Converting.
-                """
-                
-                # CLEANER LOADING MESSAGE HERE 👇
-                with st.spinner("✨ Drafting your email..."):
-                    response = model.generate_content(prompt)
-                    st.subheader("📩 Pitch Draft:")
-                    st.code(response.text, language="text")
-                    st.balloons()
+                if model is None:
+                    st.error("System Error: No models found for this API Key.")
+                else:
+                    prompt = f"""
+                    Act as a Talent Agent. Write a sponsorship pitch.
+                    To: {brand_name}
+                    From: Influencer ({my_niche}, {follower_count} followers, {avg_views} views).
+                    Tone: Professional, High-Converting.
+                    """
+                    
+                    with st.spinner("✨ Drafting your email..."):
+                        response = model.generate_content(prompt)
+                        st.subheader("📩 Pitch Draft:")
+                        st.code(response.text, language="text")
+                        st.balloons()
                     
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Final Error: {e}")
